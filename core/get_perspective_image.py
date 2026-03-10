@@ -1,3 +1,5 @@
+# core/get_perspective_image.py
+
 import cv2
 import numpy as np
 
@@ -91,12 +93,12 @@ def _warp_view(
 # -------------------------
 # Main: perspective correction using ChArUco
 # -------------------------
-def perspective_img(
+def get_perspective_img(
     src_img: np.ndarray,
     aruco_size_cm: float = 6.1,
     ref_marker_size_px: int = 300,
     debug: bool = False,
-) -> tuple[np.ndarray, float]:
+) -> tuple[np.ndarray, float, np.ndarray]:
     """
     Compute top-view (perspective corrected) image using a ChArUco board.
 
@@ -117,6 +119,8 @@ def perspective_img(
         Perspective-corrected (top-view) image.
     pixel_scale : float
         Physical size per pixel, in centimeters per pixel.
+    H_shifted : np.ndarray
+        Perspective Matrix.
     """
     aruco = cv2.aruco
 
@@ -228,7 +232,7 @@ def perspective_img(
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
-    return warped, pixel_scale
+    return warped, pixel_scale, H_shifted
 
 
 if __name__ == "__main__":
@@ -237,4 +241,4 @@ if __name__ == "__main__":
     if img is None:
         raise SystemExit("Error: image not found.")
 
-    perspective_img(img, ref_marker_size_px=100, debug=True)
+    get_perspective_img(img, ref_marker_size_px=100, debug=True)

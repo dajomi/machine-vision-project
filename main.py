@@ -3,7 +3,7 @@
 import numpy as np
 import cv2
 
-from core.get_perspective_img import perspective_img
+from core.get_perspective_image import get_perspective_img
 
 
 
@@ -13,7 +13,7 @@ def main():
     if img is None:
         raise SystemExit("Error: image not found.")
 
-    perspective_img(img, ref_marker_size_px=100, debug=True)
+    get_perspective_img(img, ref_marker_size_px=100, debug=True)
 
 
 
