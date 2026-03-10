@@ -1,0 +1,26 @@
+# .gitignore
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+.env
+.venv/
+venv/
+
+.idea/
+.vscode/
+
+*.log
+
+# 빌드/배포 산출물
+dist/
+build/
+*.egg-info/
+
+# OS/편집기 잡파일
+.DS_Store
+Thumbs.db
+
+# 임시 결과 파일
+test/
