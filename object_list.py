@@ -11,7 +11,7 @@ def show(image):
     Image.fromarray(image).show()
 
 def get_mask(img):
-    # BGR → HSV
+    # BGR → HSV                                                                                 
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
     # 파란색 범위
