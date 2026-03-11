@@ -37,6 +37,7 @@ def detect_table_and_crop(image):
 
     return cropped, (x, y, w, h)
 
+
 import os
 
 if __name__ == "__main__":
@@ -45,28 +46,17 @@ if __name__ == "__main__":
     outpath = "./output/"
     for i in range(1,7):
         filename=f"img{i:03d}.jpg"
-        # print(os.path.join(path, filename))
-        # print(os.path.join(path, filename))
-        # print(os.path.join(path, filename))
-        # print(os.path.join(path, filename))
-
         image = cv.imread(os.path.join(path, filename))
         
+        # cropped, bbox = detect_table_and_crop(image)
 
-        cropped, bbox = detect_table_and_crop(image)
+        # if cropped is None:
+        #     exit()
 
-        if cropped is None:
-            exit()
-
-        x, y, w, h = bbox
+        # x, y, w, h = bbox
 
         # 시각화
-        vis = image.copy()
-        cv.rectangle(vis, (x,y), (x+w, y+h), (0,255,0), 20)
+        # vis = image.copy()
+        # cv.rectangle(vis, (x,y), (x+w, y+h), (0,255,0), 20)
 
-        cv.imwrite(os.path.join(outpath, filename),cropped)
-        # cv.imshow("table bbox", vis[::8,::8])
-        # cv.imshow("cropped table", cropped[::8,::8])
-
-        # cv.waitKey(0)
-        # cv.destroyAllWindows()
+        # cv.imwrite(os.path.join(outpath, filename),cropped)
