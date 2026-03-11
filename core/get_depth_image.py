@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 from typing import List, Tuple
 
-from get_perspective_image import _warp_view
+from .get_perspective_image import _warp_view
 
 
 # -------------------------

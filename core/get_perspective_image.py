@@ -7,6 +7,8 @@ import numpy as np
 # -------------------------
 # Internal utility: warp to full or inner view
 # -------------------------
+
+
 def _warp_view(
     src_img: np.ndarray,
     H: np.ndarray,
@@ -89,39 +91,7 @@ def _warp_view(
 
     return warped, H_shifted
 
-
-# -------------------------
-# Main: perspective correction using ChArUco
-# -------------------------
-def get_perspective_img(
-    src_img: np.ndarray,
-    aruco_size_cm: float = 6.1,
-    ref_marker_size_px: int = 300,
-    debug: bool = False,
-) -> tuple[np.ndarray, float, np.ndarray]:
-    """
-    Compute top-view (perspective corrected) image using a ChArUco board.
-
-    Parameters
-    ----------
-    src_img : np.ndarray
-        Input image containing the ChArUco board, shape (H, W, 3) or (H, W).
-    aruco_size_cm : float, optional
-        Physical size of the reference ArUco marker (edge length) in centimeters.
-    ref_marker_size_px : int, optional
-        Reference marker size in pixels (used to scale the destination coordinates).
-    debug : bool, optional
-        If True, save and show intermediate debug images.
-
-    Returns
-    -------
-    warped : np.ndarray
-        Perspective-corrected (top-view) image.
-    pixel_scale : float
-        Physical size per pixel, in centimeters per pixel.
-    H_shifted : np.ndarray
-        Perspective Matrix.
-    """
+def _get_charuco_pts(src_img, debug=False):
     aruco = cv2.aruco
 
     # 1) Dictionary & board definition
@@ -163,7 +133,6 @@ def get_perspective_img(
     src_pts_list.append(diamond_pts)
     for mc in marker_corners[:4]:
         src_pts_list.append(mc.reshape(4, 2))
-    src_pts = np.vstack(src_pts_list).astype(np.float32)  # (20, 2)
 
     if debug:
         dbg2 = src_img.copy()
@@ -174,6 +143,42 @@ def get_perspective_img(
                 cv2.circle(dbg2, (int(x), int(y)), 5, (0, 255, 255), -1)
         cv2.imwrite("./test/detected_20points.png", dbg2)
 
+    return np.vstack(src_pts_list).astype(np.float32)  # (20, 2)
+
+# -------------------------
+# Main: perspective correction using ChArUco
+# -------------------------
+def get_perspective_img(
+    src_img: np.ndarray,
+    aruco_size_cm: float = 6.1,
+    ref_marker_size_px: int = 300,
+    debug: bool = False,
+) -> tuple[np.ndarray, float, np.ndarray, np.ndarray]:
+    """
+    Compute top-view (perspective corrected) image using a ChArUco board.
+
+    Parameters
+    ----------
+    src_img : np.ndarray
+        Input image containing the ChArUco board, shape (H, W, 3) or (H, W).
+    aruco_size_cm : float, optional
+        Physical size of the reference ArUco marker (edge length) in centimeters.
+    ref_marker_size_px : int, optional
+        Reference marker size in pixels (used to scale the destination coordinates).
+    debug : bool, optional
+        If True, save and show intermediate debug images.
+
+    Returns
+    -------
+    warped : np.ndarray
+        Perspective-corrected (top-view) image.
+    pixel_scale : float
+        Physical size per pixel, in centimeters per pixel.  
+    H_shifted : np.ndarray
+        Perspective Matrix.
+    """
+    
+    src_pts = _get_charuco_pts(src_img)
     # 4) dst_pts: theoretical coordinates of the 20 points
     dst_pts = np.array(
         [
@@ -232,7 +237,7 @@ def get_perspective_img(
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
-    return warped, pixel_scale, H_shifted
+    return warped, pixel_scale, H_shifted, src_pts
 
 
 if __name__ == "__main__":

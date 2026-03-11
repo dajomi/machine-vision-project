@@ -24,3 +24,5 @@ Thumbs.db
 
 # 임시 결과 파일
 test/
+temp/
+.temp/
