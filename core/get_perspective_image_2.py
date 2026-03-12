@@ -7,6 +7,103 @@ import numpy as np
 # =========================
 # 외부에서 재사용 가능한 static 유틸
 # =========================
+class SegmentEditor:
+    def __init__(self, img, segments):
+        self.img = img
+        self.segments = segments
+        self.active = np.ones(len(segments), dtype=bool)
+        self.window_name = "segment_editor"
+
+        # 드래그 박스 상태
+        self.dragging = False
+        self.box_start = None   # (x0, y0)
+        self.box_end = None     # (x1, y1)
+
+    def run(self):
+        cv2.namedWindow(self.window_name)
+        cv2.setMouseCallback(self.window_name, self._on_mouse)
+
+        while True:
+            vis = self._draw()
+            cv2.imshow(self.window_name, vis)
+            k = cv2.waitKey(30) & 0xFF
+            if k == ord('q') or k == 27:  # q or ESC: 취소
+                self.active[:] = True
+                break
+            if k == ord('s'):  # s: 선택 확정
+                break
+
+        cv2.destroyWindow(self.window_name)
+        filtered = [s for s, a in zip(self.segments, self.active) if a]
+        return filtered
+
+    def _draw(self):
+        out = self.img.copy()
+
+        # 선분 그리기
+        for (idx, seg) in enumerate(self.segments):
+            if not self.active[idx]:
+                # 비활성화된 선분은 연하게 표시하거나 안 그려도 됨
+                color = (0, 0, 255)  # 빨간색
+                thickness = 1
+            else:
+                color = (0, 255, 0)  # 초록색
+                thickness = 2
+
+            (p1, p2) = seg
+            cv2.line(out,
+                     (int(p1[0]), int(p1[1])),
+                     (int(p2[0]), int(p2[1])),
+                     color, thickness, cv2.LINE_AA)
+
+        # 드래그 중인 박스 시각화
+        if self.dragging and self.box_start is not None and self.box_end is not None:
+            x0, y0 = self.box_start
+            x1, y1 = self.box_end
+            cv2.rectangle(out, (x0, y0), (x1, y1), (255, 0, 0), 1)
+
+        return out
+
+    def _on_mouse(self, event, x, y, flags, param):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            # 드래그 시작
+            self.dragging = True
+            self.box_start = (x, y)
+            self.box_end = (x, y)
+
+        elif event == cv2.EVENT_MOUSEMOVE:
+            if self.dragging:
+                # 드래그 중: 박스 끝점 업데이트
+                self.box_end = (x, y)
+
+        elif event == cv2.EVENT_LBUTTONUP:
+            # 드래그 종료: 박스 영역 내 선분 비활성화
+            if self.dragging and self.box_start is not None:
+                self.box_end = (x, y)
+                self._deactivate_segments_in_box(self.box_start, self.box_end)
+
+            self.dragging = False
+            self.box_start = None
+            self.box_end = None
+
+    def _deactivate_segments_in_box(self, p0, p1):
+        x0, y0 = p0
+        x1, y1 = p1
+
+        # 좌상단/우하단으로 정규화
+        x_min, x_max = sorted([x0, x1])
+        y_min, y_max = sorted([y0, y1])
+
+        for i, (p1, p2) in enumerate(self.segments):
+            if not self.active[i]:
+                continue
+
+            # 중점 기반으로 단순 체크 (필요하면 양 끝점 둘 다 체크로 변경)
+            mx = 0.5 * (p1[0] + p2[0])
+            my = 0.5 * (p1[1] + p2[1])
+
+            if (x_min <= mx <= x_max) and (y_min <= my <= y_max):
+                self.active[i] = False
 
 def line_from_points(p1, p2):
     x1, y1 = p1
@@ -521,14 +618,16 @@ class LineBasedRectifier:
         self.step = step
 
     # ----- public API -----
-    def rectify(self, src_img):
+    def rectify(self, src_img, segments=None):
         """
         input: src_img (BGR or gray)
+               segments: 사용자가 편집한 선분 리스트(optional)
         output: rectified_img, H, meta
         """
         gray = cv2.cvtColor(src_img, cv2.COLOR_BGR2GRAY) if src_img.ndim == 3 else src_img
 
-        segments = self._detect_segments(gray)
+        if segments is None:
+            segments = self._detect_segments(gray)
         if len(segments) < 10:
             raise RuntimeError("Not enough line segments detected.")
 
@@ -675,22 +774,24 @@ def warp_segments(H, segments):
         warped.append((wp1, wp2))
     return warped
 
-
 if __name__ == "__main__":
-    SRC_IMG_PATH = "data\\set_5\\KakaoTalk_20260311_120335889_04.jpg"
+    SRC_IMG_PATH = "data\\set_2\\KakaoTalk_20260311_112717712_05.jpg"
     img = cv2.imread(SRC_IMG_PATH)
-    if img is None:
-        raise SystemExit("Error: image not found.")
-
     img = cv2.resize(img, None, fx=0.2, fy=0.2, interpolation=cv2.INTER_AREA)
 
-    # step 모드 선택: "step0", "step1", "step2", "step3"
     rectifier = LineBasedRectifier(
         num_vps=2,
         min_seg_length=30,
-        step="step1"  # 여기만 바꾸면서 진행
+        step="step1"
     )
-    rectified, H, meta = rectifier.rectify(img)
+
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    segments_raw = rectifier._detect_segments(gray)
+
+    editor = SegmentEditor(img, segments_raw)
+    segments_edited = editor.run()  # 사용자가 의자 다리 등 끄기
+
+    rectified, H, meta = rectifier.rectify(img, segments=segments_edited)
 
     print("Best H:\n", H)
     print("Meta keys:", meta.keys())

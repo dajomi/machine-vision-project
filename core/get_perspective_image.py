@@ -8,7 +8,71 @@ import numpy as np
 # Internal utility: warp to full or inner view
 # -------------------------
 
+class PointEditor:
+    def __init__(self, img, pts, crop_size=1000):
+        self.full_img = img
+        self.pts_orig = pts.astype(np.float32).copy()
+        self.crop_size = crop_size
+        self.radius = 8
+        self.selected_idx = -1
+        self.window_name = f"Point Editor ({crop_size}x{crop_size})"
 
+        # 1) Crop 영역 설정 (중앙 기준)
+        avg_pt = np.mean(self.pts_orig, axis=0)
+        self.offset_x = int(np.clip(avg_pt[0] - crop_size // 2, 0, img.shape[1] - crop_size))
+        self.offset_y = int(np.clip(avg_pt[1] - crop_size // 2, 0, img.shape[0] - crop_size))
+        
+        # 2) 이미지 크롭 및 좌표 변환 (Original -> Crop)
+        self.crop_img = img[self.offset_y : self.offset_y + crop_size, 
+                            self.offset_x : self.offset_x + crop_size].copy()
+        self.pts_crop = self.pts_orig - np.array([self.offset_x, self.offset_y])
+
+    def draw(self):
+        img_draw = self.crop_img.copy()
+        for i, (x, y) in enumerate(self.pts_crop):
+            px, py = int(x), int(y)
+            color = (0, 0, 255) if i == self.selected_idx else (0, 255, 0)
+            cv2.circle(img_draw, (px, py), self.radius, color, -1)
+            cv2.putText(img_draw, str(i), (px + 5, py - 5), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+        return img_draw
+
+    def mouse_callback(self, event, x, y, flags, param):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            dists = np.linalg.norm(self.pts_crop - np.array([x, y]), axis=1)
+            if dists.min() < self.radius * 2:
+                self.selected_idx = np.argmin(dists)
+
+        elif event == cv2.EVENT_MOUSEMOVE:
+            if self.selected_idx != -1:
+                # Crop 영역 내부로 이동 제한
+                self.pts_crop[self.selected_idx] = [
+                    np.clip(x, 0, self.crop_size),
+                    np.clip(y, 0, self.crop_size)
+                ]
+
+        elif event == cv2.EVENT_LBUTTONUP:
+            self.selected_idx = -1
+
+    def edit(self):
+        cv2.namedWindow(self.window_name)
+        cv2.setMouseCallback(self.window_name, self.mouse_callback)
+
+        while True:
+            display_img = self.draw()
+            cv2.imshow(self.window_name, display_img)
+            key = cv2.waitKey(20) & 0xFF
+            if key == ord(' ') or key == 13:  # Space or Enter
+                break
+            elif key == 27:  # ESC
+                print("수정을 취소합니다. (기존 좌표 유지)")
+                return self.pts_orig
+
+        cv2.destroyWindow(self.window_name)
+        
+        # 3) 역변환 (Crop -> Original)
+        final_pts = self.pts_crop + np.array([self.offset_x, self.offset_y])
+        return final_pts
 def _warp_view(
     src_img: np.ndarray,
     H: np.ndarray,
@@ -152,6 +216,7 @@ def get_perspective_img(
     src_img: np.ndarray,
     aruco_size_cm: float = 6.1,
     ref_marker_size_px: int = 300,
+    test:bool = False,
     debug: bool = False,
 ) -> tuple[np.ndarray, float, np.ndarray, np.ndarray]:
     """
@@ -179,6 +244,11 @@ def get_perspective_img(
     """
     
     src_pts = _get_charuco_pts(src_img)
+    
+    # 인터랙티브 수정 (1000x1000 크롭 모드)
+    if test:
+        editor = PointEditor(src_img, src_pts, crop_size=1000)
+        src_pts = editor.edit()
     # 4) dst_pts: theoretical coordinates of the 20 points
     dst_pts = np.array(
         [
