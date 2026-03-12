@@ -2,7 +2,11 @@
 
 ## Rating
 Test Data Set 기반으로 모델 성능(yolo, sam2) 평가하기. 
+
+
 입력 : Test DataSet, 모델
+
+
 출력 : 정답률, Score(정답 * IOU * confidence), 사이즈(IOU * confidence) 
 ```
 eval_dataset/
