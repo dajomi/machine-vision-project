@@ -775,13 +775,13 @@ def warp_segments(H, segments):
     return warped
 
 if __name__ == "__main__":
-    SRC_IMG_PATH = "data\\set_2\\KakaoTalk_20260311_112717712_05.jpg"
+    SRC_IMG_PATH = "data\\set_4\\KakaoTalk_20260311_120335889_07.jpg"
     img = cv2.imread(SRC_IMG_PATH)
-    img = cv2.resize(img, None, fx=0.2, fy=0.2, interpolation=cv2.INTER_AREA)
+    img = cv2.resize(img, None, fx=0.6, fy=0.6, interpolation=cv2.INTER_AREA)
 
     rectifier = LineBasedRectifier(
         num_vps=2,
-        min_seg_length=30,
+        min_seg_length=90,
         step="step1"
     )
 
@@ -836,7 +836,7 @@ if __name__ == "__main__":
     cv2.imshow("parallel_src", drawn_parallel_src)
     cv2.imshow("parallel+ortho_src", drawn_ortho_src)
     cv2.imshow("rectified", rectified)
-    cv2.imshow("parallel_rectified", drawn_parallel_rect)
-    cv2.imshow("parallel+ortho_rectified", drawn_ortho_rect)
+    # cv2.imshow("parallel_rectified", drawn_parallel_rect)
+    # cv2.imshow("parallel+ortho_rectified", drawn_ortho_rect)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
