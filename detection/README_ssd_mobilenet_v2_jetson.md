@@ -1,5 +1,35 @@
 # SSD-MobileNetV2 → ONNX → Jetson Nano 실행 가이드
 
+
+ssd\_mobilenet\_v2\_common을 공통으로 사용한다고 함.
+
+# 컴퓨터에서 학습
+> 필요한거 : YOUR\_DATASET, ssd\_mobilenet\_v2\_common
+* python 01\_train\_ssd\_mobilenet\_v2.py --data-root YOUR\_DATASET --epochs 20 --batch-size 4 --img-size 320
+
+
+# 컴퓨터에서 성능 평가
+> 필요한거 : YOUR\_DATASET, ssd\_mobilenet\_v2\_common, infer\_jetson\_onnx, checkpoints\_ssd\_mbv2/best.pth
+* python 02\_eval\_detection.py --data-root YOUR\_DATASET --backend pytorch --checkpoint checkpoints\_ssd\_mbv2/best.pth
+
+
+# 컴퓨터에서 onnx 변환
+> 필요한거 : ssd\_mobilenet\_v2\_common, checkpoints\_ssd\_mbv2/best.pth
+>  성능 좋은거는 windows\_onnx로 checkpoints\_ssd\_mbv2 폴더 자체를 옮겨주기
+* python 03\_export\_ssd\_mobilenet\_v2\_onnx.py --checkpoint checkpoints\_ssd\_mbv2/best.pth --output ssd\_mobilenetv2\_320\_raw.onnx
+
+
+# 리눅스에서 작동(bash)
+> 필요한거 : infer\_jetson\_onnx.py, ssd\_mobilenetv2\_320\_raw.onnx, ssd\_mobilenetv2\_320\_raw.onnx.data
+* python infer\_jetson\_onnx.py \\
+* &#x20; --onnx ssd\_mobilenetv2\_320\_raw.onnx \\
+* &#x20; --image img001.jpg \\
+* &#x20; --labels labels.txt \\
+* &#x20; --input-size 320 \\
+* &#x20; --output result.jpg
+
+
+
 ## 1\) 데이터셋 구조
 
 ```text
@@ -159,32 +189,3 @@ python3 infer\_jetson\_onnx.py \\
 * `train.txt`, `val.txt`, `test.txt`에는 **확장자 없는 이미지 ID**만 들어가야 함. 예: `IMG\_0001`
 * XML의 `<name>`은 반드시 `labels.txt` 항목과 정확히 일치해야 함.
 * Jetson Nano 2GB에서는 640보다 **320 입력**이 현실적.
-
-
-ssd\_mobilenet\_v2\_common을 공통으로 사용한다고 함.
-
-# 컴퓨터에서 학습
-> 필요한거 : YOUR\_DATASET, ssd\_mobilenet\_v2\_common
-* python 01\_train\_ssd\_mobilenet\_v2.py --data-root YOUR\_DATASET --epochs 20 --batch-size 4 --img-size 320
-
-
-# 컴퓨터에서 성능 평가
-> 필요한거 : YOUR\_DATASET, ssd\_mobilenet\_v2\_common, infer\_jetson\_onnx, checkpoints\_ssd\_mbv2/best.pth
-* python 02\_eval\_detection.py --data-root YOUR\_DATASET --backend pytorch --checkpoint checkpoints\_ssd\_mbv2/best.pth
-
-
-# 컴퓨터에서 onnx 변환
-> 필요한거 : ssd\_mobilenet\_v2\_common, checkpoints\_ssd\_mbv2/best.pth
->  성능 좋은거는 windows\_onnx로 checkpoints\_ssd\_mbv2 폴더 자체를 옮겨주기
-* python 03\_export\_ssd\_mobilenet\_v2\_onnx.py --checkpoint checkpoints\_ssd\_mbv2/best.pth --output ssd\_mobilenetv2\_320\_raw.onnx
-
-
-# 리눅스에서 작동(bash)
-> 필요한거 : infer\_jetson\_onnx.py, ssd\_mobilenetv2\_320\_raw.onnx, ssd\_mobilenetv2\_320\_raw.onnx.data
-* python infer\_jetson\_onnx.py \\
-* &#x20; --onnx ssd\_mobilenetv2\_320\_raw.onnx \\
-* &#x20; --image img001.jpg \\
-* &#x20; --labels labels.txt \\
-* &#x20; --input-size 320 \\
-* &#x20; --output result.jpg
-
