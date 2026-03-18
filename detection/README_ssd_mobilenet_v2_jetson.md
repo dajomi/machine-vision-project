@@ -26,7 +26,7 @@ ssd\_mobilenet\_v2\_common을 공통으로 사용한다고 함.
 > 필요한거 : infer\_jetson\_onnx.py, ssd\_mobilenetv2\_320\_raw.onnx, ssd\_mobilenetv2\_320\_raw.onnx.data
 >
 > 
-> 위에서 변환한 onnx와 onnx.data를 포함해야함.
+> 위에서 변환한 .onnx와 .onnx.data를 포함해야함.
 > 
 * python infer\_jetson\_onnx.py \\
 * &#x20; --onnx ssd\_mobilenetv2\_320\_raw.onnx \\
