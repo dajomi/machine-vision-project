@@ -15,13 +15,19 @@ ssd\_mobilenet\_v2\_common을 공통으로 사용한다고 함.
 
 # 컴퓨터에서 onnx 변환
 > 필요한거 : ssd\_mobilenet\_v2\_common, checkpoints\_ssd\_mbv2/best.pth
+>
+> 
 > 성능 좋은거는 windows\_onnx로 checkpoints\_ssd\_mbv2 폴더 자체를 옮겨주기
+> 
 * python 03\_export\_ssd\_mobilenet\_v2\_onnx.py --checkpoint checkpoints\_ssd\_mbv2/best.pth --output ssd\_mobilenetv2\_320\_raw.onnx
 
 
 # 리눅스에서 작동(bash)
 > 필요한거 : infer\_jetson\_onnx.py, ssd\_mobilenetv2\_320\_raw.onnx, ssd\_mobilenetv2\_320\_raw.onnx.data
+>
+> 
 > 위에서 변환한 onnx와 onnx.data를 포함해야함.
+> 
 * python infer\_jetson\_onnx.py \\
 * &#x20; --onnx ssd\_mobilenetv2\_320\_raw.onnx \\
 * &#x20; --image img001.jpg \\
