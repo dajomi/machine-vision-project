@@ -20,7 +20,10 @@ ssd\_mobilenet\_v2\_common을 공통으로 사용한다고 함.
 
 
 
-조절할 후처리 파라미터
+
+
+
+조절할 후처리 파라미터(이거 해야만 onnx 변환이 그나마 잘 되는 편)
 
 > --checkpoint, --output, --opset, --score-thresh, --nms-thresh, --detections-per-img, --topk-candidates
 
